@@ -1,6 +1,10 @@
 # hive-start
 
-## 搭建hive 并集成hadoop，以mysql作为元数据库（centos7以后不支持mysql，支持mariadb，完全兼容mariadb）
+## 官网：https://hive.apache.org/
+## 参考教程： https://www.yiibai.com/hive/
+
+
+### 搭建hive 并集成hadoop，以mysql作为元数据库（centos7以后不支持mysql，支持mariadb，完全兼容mariadb）
 
 * 安装参考连接：http://blog.zhangshun.net/archives/401  https://blog.csdn.net/qq_37106028/article/details/78247727
 
