@@ -113,7 +113,7 @@ export HADOOP_HOME=/usr/local/hadoop
 $ cd $HIVE_HOME/conf
 $ cp hive-default.xml.template hive-site.xml
 
-vi hive-site.xml
+# vi hive-site.xml 添加元数据库的相关配置 
 
 <!--新增配置-->
 <property>
@@ -261,7 +261,8 @@ hive>
 
 #### 一、测试连接
 
- * 参考连接： https://blog.csdn.net/qq_39680564/article/details/89945195  https://blog.csdn.net/alan_liuyue/article/details/90299035
+ * 参考连接： https://blog.csdn.net/qq_39680564/article/details/89945195  https://blog.csdn.net/alan_liuyue/article/details/90299035 https://blog.csdn.net/leanaoo/article/details/83351240
+ * 参看只是看他们的新修改的配置，一定要再我们上一步安装好hive的基础上进行的，我这里在贴出需要修改的地方，下面的ip记得改为你们自己的ip
 
   * （1）修改hive配置文件： hive-site.xml
    ``` 
@@ -281,7 +282,18 @@ hive>
     <property>
      <name>hive.jdbc_passwd.auth.hiveroot</name><!--用户名为最后一个:hiveroot-->
      <value>123456</value><!--密码-->
-    </property>  
+    </property>
+    
+    <!--hiveservice2的配置 端口和主机ip-->
+    <property>
+         <name>hive.server2.thrift.port</name>
+         <value>10000</value>
+    </property>
+     <property>
+     	<name>hive.server2.thrift.bind.host</name>
+     	<value>192.168.2.31</value>
+     </property>
+     
    ```
   * （2）修改hadoop的配置文件： ---改完后重启hadoop
    ```
