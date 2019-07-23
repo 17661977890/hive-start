@@ -253,6 +253,7 @@ hive>
 
 ```
 
+* vi vim 编辑工具  快速定位行  vi 文件名 +n    eg: vi hive-site.xml +4338
 
 
 
