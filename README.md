@@ -9,7 +9,7 @@
 * 安装参考连接：http://blog.zhangshun.net/archives/401  https://blog.csdn.net/qq_37106028/article/details/78247727
 
 
-### 安装mysql遇到的问题
+#### 安装mysql遇到的问题
 
 * (1) 开始我按照mysql 下载yum源，安装此 https://blog.csdn.net/qq_38591756/article/details/82958333 操作。
   * 地址： https://dev.mysql.com/downloads/file/?id=484922  看到 No thanks, just start my download. 右键赋值链接地址；
@@ -42,7 +42,7 @@ Failed to start mysqld.service: Unit not found原因就是centos7 放弃mysql；
   grant all privileges on *.* to root@”sun.com” identified by “123456”;   
   #root登录mysql的用户名，sun.com你虚拟机的ip 123456 是你的mysql密码
   ```
-### 一、安装mariadb
+#### 一、安装mariadb
 
 * 经过上述安装mysql 踩过的坑之后，我们使用mariadb 
 
@@ -78,7 +78,7 @@ set password for root@localhost = password('123456')
 # 注意修改的密码，在配置hive-site.xml 会用到，别忘记
 ```
 
-### 二、安装hive
+#### 二、安装hive
 
 * 参考链接： https://www.yiibai.com/hive/hive_installation.html  首先需要安装好jdk 和 hadoop 并配置好环境变量
 * 可以去官网下载和你之前安装hadoop版本对应的hive版本 （我这里用的是hadoop2.7.7 hive2.3.5） 地址：https://hive.apache.org/downloads.html
@@ -139,6 +139,7 @@ vi hive-site.xml
 <!--结束-->
 # 注意，要删除原来配置文件存在的相同配置项，可以通过 :/xxx 来查找，如果不去掉，hive会默认忽略你得配置，配置文件刚开始的注释警告已经给出提示。
 # jdbc:mysql://192.168.2.31:3306/hive?createDatabaseIfNotExist 这样配置，我们启动hive时候，会自动再mariadb给我们创建hive数据库。
+# 另外需要修改两个地方 指定文件位置的 他是标识${systemId...} 要换成你具体的文件路径，自己选择位置，遇到报错自己百度。不再复现
 ```
 
 * （6）添加mariadb的驱动jar包：
@@ -154,7 +155,7 @@ vi hive-site.xml
 ```
 * （8）启动hive  再hive目录下  bin/hive
 
-### 各种报错
+#### 各种报错
 * （1）
 ```
 hive> show tables;
@@ -256,4 +257,198 @@ hive>
 * vi vim 编辑工具  快速定位行  vi 文件名 +n    eg: vi hive-site.xml +4338
 
 
+### java 连接 hive 并集成springBoot
 
+#### 一、测试连接
+
+ * 参考连接： https://blog.csdn.net/qq_39680564/article/details/89945195  https://blog.csdn.net/alan_liuyue/article/details/90299035
+
+  * （1）修改hive配置文件： hive-site.xml
+   ``` 
+    <!--自定义远程连接用户名和密码-->
+    <property>
+    <name>hive.server2.authentication</name>
+    <value>NOSASL</value><!--默认为none，修改成NOSASL-->
+    </property>
+     
+    <!--指定解析jar包，指定value值-->
+    <property>
+    <name>hive.server2.custom.authentication.class</name>
+    <value>org.apache.hadoop.hive.contrib.auth.CustomPasswdAuthenticator</value>
+    </property>  
+     
+    <!--这个之前没有，新加的配置，设置用户名和密码-->
+    <property>
+     <name>hive.jdbc_passwd.auth.hiveroot</name><!--用户名为最后一个:hiveroot-->
+     <value>123456</value><!--密码-->
+    </property>  
+   ```
+  * （2）修改hadoop的配置文件： ---改完后重启hadoop
+   ```
+   # hdfs-site.xml 添加配置
+   
+    <property>
+     <name>dfs.webhdfs.enabled</name>
+     <value>true</value>
+    </property>
+    
+    # core-site.xml 添加配置
+    
+    <property>
+      <name>hadoop.proxyuser.hadoop.hosts</name>
+      <value>*</value>
+    </property>
+    <property>
+      <name>hadoop.proxyuser.hadoop.groups</name>
+      <value>*</value>
+    </property>
+    <property>
+    	<name>hadoop.proxyuser.root.hosts</name>
+    	<value>*</value>
+    </property>
+    <property>
+    	<name>hadoop.proxyuser.root.groups</name>
+    	<value>*</value>
+    </property>
+
+   ```
+  * （3）启动hiveserver2
+   ```
+   [root@master ~]# hiveserver2
+   #或者
+   [root@master ~]# hive --service hiveserver2
+   # 启动成功的话显示如下日志，然后我们需要打开另外的日志，再进行测试连接 用 beeline
+   [root@sun conf]# hiveserver2
+   2019-07-23 16:58:35: Starting HiveServer2
+   SLF4J: Class path contains multiple SLF4J bindings.
+   SLF4J: Found binding in [jar:file:/usr/local/hive/lib/log4j-slf4j-impl-2.6.2.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+   SLF4J: Found binding in [jar:file:/usr/local/hadoop/share/hadoop/common/lib/slf4j-log4j12-1.7.10.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+   SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+   SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
+   ```
+  * （4）xshell 开启另外的窗口测试连接：（几个报错示意如下）
+   ```
+   [root@sun ~]# beeline
+   SLF4J: Class path contains multiple SLF4J bindings.
+   SLF4J: Found binding in [jar:file:/usr/local/hive/lib/log4j-slf4j-impl-2.6.2.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+   SLF4J: Found binding in [jar:file:/usr/local/hadoop/share/hadoop/common/lib/slf4j-log4j12-1.7.10.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+   SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+   SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
+   Beeline version 2.3.5 by Apache Hive
+   
+   # 输入： !connect jdbc:hive2://192.168.2.31:10000/default;auth=noSasl 测试
+   beeline> !connect jdbc:hive2://192.168.2.31:10000/default;auth=noSasl
+   ```
+   
+   * 报错1： 因为在hive-site.xml中配置了：
+   ```
+   <property>
+      <name>hive.server2.authentication</name>
+      <value>NOSASL</value>
+   </property>
+   但是没有auth=noSasl指定连接属性。
+   
+   beeline> !connect jdbc:hive2://192.168.2.31:10000
+   Connecting to jdbc:hive2://192.168.2.31:10000
+   Enter username for jdbc:hive2://192.168.2.31:10000: hiveroot
+   Enter password for jdbc:hive2://192.168.2.31:10000: ******
+   19/07/23 16:26:12 [main]: WARN jdbc.HiveConnection: Failed to connect to 192.168.2.31:10000
+   Unexpected end of file when reading from HS2 server. The root cause might be too many concurrent connections. Please ask the administrator to check the number of active connections, and adjust hive.server2.thrift.max.worker.threads if applicable.
+   Error: Could not open client transport with JDBC Uri: jdbc:hive2://192.168.2.31:10000: null (state=08S01,code=0)
+   ```
+   
+   * 报错2：输入你配置的用户名密码，打印报错的意思是没有开启hiveservice2 服务，需要启动hiveservice2
+   ```
+   Connecting to jdbc:hive2://192.168.2.31:10000/default;auth=noSasl
+   Enter username for jdbc:hive2://192.168.2.31:10000/default: hiveroot
+   Enter password for jdbc:hive2://192.168.2.31:10000/default: ******  （我这里就是123456）
+   19/07/23 16:42:56 [main]: WARN jdbc.HiveConnection: Failed to connect to 192.168.2.31:10000
+   Could not open connection to the HS2 server. Please check the server URI and if the URI is correct, then ask the administrator to check the server status.
+   Error: Could not open client transport with JDBC Uri: jdbc:hive2://192.168.2.31:10000/default;auth=noSasl: java.net.ConnectException: 拒绝连接 (Connection refused) (state=08S01,code=0)
+   ```
+  * 如果hiveservice2 正常启动，可以访问 192.168.2.31:10002  可以看到下图：（我们可以看logs日志来排查问题）
+  
+   ![image](https://img-blog.csdn.net/20181024212943411?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xlYW5hb28=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
+   
+   * 报错3：可以查看日志
+   ```
+    org.apache.thrift.transport.TTransportException
+    	at org.apache.thrift.transport.TIOStreamTransport.read(TIOStreamTransport.java:132) ~[hive-exec-2.3.5.jar:2.3.5]
+    	at org.apache.thrift.transport.TTransport.readAll(TTransport.java:86) ~[hive-exec-2.3.5.jar:2.3.5]
+    	at org.apache.thrift.protocol.TBinaryProtocol.readStringBody(TBinaryProtocol.java:380) ~[hive-exec-2.3.5.jar:2.3.5]
+    	at org.apache.thrift.protocol.TBinaryProtocol.readMessageBegin(TBinaryProtocol.java:230) ~[hive-exec-2.3.5.jar:2.3.5]
+    	at org.apache.thrift.TServiceClient.receiveBase(TServiceClient.java:77) ~[hive-exec-2.3.5.jar:2.3.5]
+    	at org.apache.hive.service.rpc.thrift.TCLIService$Client.recv_OpenSession(TCLIService.java:168) ~[hive-exec-2.3.5.jar:2.3.5]
+    	at org.apache.hive.service.rpc.thrift.TCLIService$Client.OpenSession(TCLIService.java:155) ~[hive-exec-2.3.5.jar:2.3.5]
+    	at org.apache.hive.jdbc.HiveConnection.openSession(HiveConnection.java:680) [hive-jdbc-2.3.5.jar:2.3.5]
+    	at org.apache.hive.jdbc.HiveConnection.<init>(HiveConnection.java:200) [hive-jdbc-2.3.5.jar:2.3.5]
+    	at org.apache.hive.jdbc.HiveDriver.connect(HiveDriver.java:107) [hive-jdbc-2.3.5.jar:2.3.5]
+    	at java.sql.DriverManager.getConnection(DriverManager.java:664) [?:1.8.0_212]
+    	at java.sql.DriverManager.getConnection(DriverManager.java:208) [?:1.8.0_212]
+    	at org.apache.hive.beeline.DatabaseConnection.connect(DatabaseConnection.java:145) [hive-beeline-2.3.5.jar:2.3.5]
+    	at org.apache.hive.beeline.DatabaseConnection.getConnection(DatabaseConnection.java:209) [hive-beeline-2.3.5.jar:2.3.5]
+    	at org.apache.hive.beeline.Commands.connect(Commands.java:1641) [hive-beeline-2.3.5.jar:2.3.5]
+    	at org.apache.hive.beeline.Commands.connect(Commands.java:1536) [hive-beeline-2.3.5.jar:2.3.5]
+    	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_212]
+    	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_212]
+    	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_212]
+    	at java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_212]
+    	at org.apache.hive.beeline.ReflectiveCommandHandler.execute(ReflectiveCommandHandler.java:56) [hive-beeline-2.3.5.jar:2.3.5]
+    	at org.apache.hive.beeline.BeeLine.execCommandWithPrefix(BeeLine.java:1273) [hive-beeline-2.3.5.jar:2.3.5]
+    	at org.apache.hive.beeline.BeeLine.dispatch(BeeLine.java:1312) [hive-beeline-2.3.5.jar:2.3.5]
+    	at org.apache.hive.beeline.BeeLine.execute(BeeLine.java:1178) [hive-beeline-2.3.5.jar:2.3.5]
+    	at org.apache.hive.beeline.BeeLine.begin(BeeLine.java:1033) [hive-beeline-2.3.5.jar:2.3.5]
+    	at org.apache.hive.beeline.BeeLine.mainWithInputRedirection(BeeLine.java:519) [hive-beeline-2.3.5.jar:2.3.5]
+    	at org.apache.hive.beeline.BeeLine.main(BeeLine.java:501) [hive-beeline-2.3.5.jar:2.3.5]
+    	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_212]
+    	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_212]
+    	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_212]
+    	at java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_212]
+    	at org.apache.hadoop.util.RunJar.run(RunJar.java:226) [hadoop-common-2.7.7.jar:?]
+    	at org.apache.hadoop.util.RunJar.main(RunJar.java:141) [hadoop-common-2.7.7.jar:?]
+    19/07/23 16:44:00 [main]: WARN jdbc.HiveConnection: Failed to connect to 192.168.2.31:10000
+    Error: Could not open client transport with JDBC Uri: jdbc:hive2://192.168.2.31:10000/default;auth=noSasl: Could not establish connection to jdbc:hive2://192.168.2.31:10000/default;auth=noSasl: null (state=08S01,code=0)
+    
+    # 看日志：
+    2019-07-23T16:33:11,145 ERROR [HiveServer2-Handler-Pool: Thread-42] server.TThreadPoolServer: Error occurred during processing of message.
+    java.lang.RuntimeException: org.apache.thrift.transport.TTransportException: Invalid status -128
+    	at org.apache.thrift.transport.TSaslServerTransport$Factory.getTransport(TSaslServerTransport.java:219) ~[hive-exec-2.3.5.jar:2.3.5]
+    	at org.apache.thrift.server.TThreadPoolServer$WorkerProcess.run(TThreadPoolServer.java:269) ~[hive-exec-2.3.5.jar:2.3.5]
+    	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) [?:1.8.0_212]
+    	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) [?:1.8.0_212]
+    	at java.lang.Thread.run(Thread.java:748) [?:1.8.0_212]
+    Caused by: org.apache.thrift.transport.TTransportException: Invalid status -128
+    	at org.apache.thrift.transport.TSaslTransport.sendAndThrowMessage(TSaslTransport.java:232) ~[hive-exec-2.3.5.jar:2.3.5]
+    	at org.apache.thrift.transport.TSaslTransport.receiveSaslMessage(TSaslTransport.java:184) ~[hive-exec-2.3.5.jar:2.3.5]
+    	at org.apache.thrift.transport.TSaslServerTransport.handleSaslStartMessage(TSaslServerTransport.java:125) ~[hive-exec-2.3.5.jar:2.3.5]
+    	at org.apache.thrift.transport.TSaslTransport.open(TSaslTransport.java:271) ~[hive-exec-2.3.5.jar:2.3.5]
+    	at org.apache.thrift.transport.TSaslServerTransport.open(TSaslServerTransport.java:41) ~[hive-exec-2.3.5.jar:2.3.5]
+    	at org.apache.thrift.transport.TSaslServerTransport$Factory.getTransport(TSaslServerTransport.java:216) ~[hive-exec-2.3.5.jar:2.3.5]
+    	... 4 more
+    	
+    # 这个报错是因为 我之前hive-site.xml 配置文件,这里之前配置的不是NOSASL  是CUSTOM,然后我测试有指定auth=noSasl !connect jdbc:hive2://192.168.2.31:10000/default;auth=noSasl
+    <property>
+        <name>hive.server2.authentication</name>
+        <value>NOSASL</value><!--默认为none，修改成NOSASL-->
+     </property>
+   ```
+   
+   * 测试成功日志如下：
+   ```
+   beeline> !connect jdbc:hive2://192.168.2.31:10000/default;auth=noSasl
+   Connecting to jdbc:hive2://192.168.2.31:10000/default;auth=noSasl
+   Enter username for jdbc:hive2://192.168.2.31:10000/default: hiveroot
+   Enter password for jdbc:hive2://192.168.2.31:10000/default: ******
+   Connected to: Apache Hive (version 2.3.5)
+   Driver: Hive JDBC (version 2.3.5)
+   Transaction isolation: TRANSACTION_REPEATABLE_READ
+   0: jdbc:hive2://192.168.2.31:10000/default> show tables;
+   +-----------+
+   | tab_name  |
+   +-----------+
+   +-----------+
+   No rows selected (1.235 seconds)
+   0: jdbc:hive2://192.168.2.31:10000/default> 
+   ```
+   
+  * 测试通过后 可以进行java代码的测试了

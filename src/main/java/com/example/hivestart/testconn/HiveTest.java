@@ -39,7 +39,7 @@ public class HiveTest {
  
  
     public static void main(String args[]) throws SQLException{
-    	//在defaul库中建表hiveroot
+    	//在default库中建表hiveroot
     	String sql1="select * from hiveroot limit 1";
     	PreparedStatement pstm = getHiveConnection().prepareStatement(sql1);
     	ResultSet rs= pstm.executeQuery(sql1);
