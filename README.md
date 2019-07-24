@@ -278,7 +278,7 @@ hive>
     <value>org.apache.hadoop.hive.contrib.auth.CustomPasswdAuthenticator</value>
     </property>  
      
-    <!--这个之前没有，新加的配置，设置用户名和密码-->
+    <!--这个之前没有，新加的配置，设置用户名和密码，之前没有此配置，默认应该是空"" ""-->
     <property>
      <name>hive.jdbc_passwd.auth.hiveroot</name><!--用户名为最后一个:hiveroot-->
      <value>123456</value><!--密码-->
@@ -463,4 +463,4 @@ hive>
    0: jdbc:hive2://192.168.2.31:10000/default> 
    ```
    
-  * 测试通过后 可以进行java代码的测试了
+  * 测试通过后 可以进行java代码的测试了， 启动类跑起来默认端口8080，postman测试，可以先调建表方法或者使用终端命令来建表。
