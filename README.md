@@ -464,3 +464,9 @@ hive>
    ```
    
   * 测试通过后 可以进行java代码的测试了， 启动类跑起来默认端口8080，postman测试，可以先调建表方法或者使用终端命令来建表。
+  
+  
+### hive sql
+  
+  * https://www.cnblogs.com/frankdeng/p/9309668.html
+  * https://blog.csdn.net/hguisu/article/details/7256833
